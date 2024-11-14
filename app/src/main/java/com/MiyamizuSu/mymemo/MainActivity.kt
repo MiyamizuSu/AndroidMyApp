@@ -6,17 +6,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.room.Room
 import com.MiyamizuSu.mymemo.classLibrary.DataBase.AppDatabase
 import com.MiyamizuSu.mymemo.classLibrary.viewModels.MainFrameViewModel
 import com.MiyamizuSu.mymemo.ui.theme.MyMemoTheme
@@ -27,21 +30,48 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         val db = AppDatabase.getMyDb(this.applicationContext)
         var viewModel=MainFrameViewModel(db)
         enableEdgeToEdge()
         setContent {
-            MyMemoTheme {
-                Column(modifier = Modifier
-                    .border(width = 2.dp,
-                    color = Color.Black,
-                    shape = RoundedCornerShape(8.dp))
-                    .fillMaxSize(1.0f)
-                )
-                {
-                    viewModel.UpperFrame()
-                    viewModel.DownFrame()
+            Scaffold(
+                topBar = {
+
+                },
+                bottomBar = {
+                    BottomAppBar(
+                        actions = {
+
+                        },
+                        floatingActionButton = {
+
+                        },
+                        modifier = Modifier.height(57.dp)
+                    )
+                },
+                floatingActionButton = {
+
+                }
+            ) { innerPadding ->
+                Column(modifier = Modifier.padding(innerPadding)) {
+                    MyMemoTheme {
+                        Column(modifier = Modifier
+                            .fillMaxSize(1.0f)
+                            .background(color = MaterialTheme.colorScheme.surface)
+                            .graphicsLayer {
+
+                            }
+                        )
+                        {
+                            viewModel.UpperFrame()
+                            HorizontalDivider(thickness = 2.dp, modifier = Modifier
+                                .fillMaxWidth(0.5f)
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 10.dp)
+                            )
+                            viewModel.DownFrame()
+                        }
+                    }
                 }
             }
         }
