@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -59,8 +62,11 @@ import java.time.LocalDate
 class MainFrameViewModel : ViewModelBase, ViewModel {
 
     private val _memoRepo: MemoRepo
+    private val _navToAdd:()->Unit
 
-    constructor(database: AppDatabase) {
+
+    constructor(database: AppDatabase,navToAdd:()->Unit) {
+        this._navToAdd=navToAdd
         this._memoRepo = MemoRepo(database.memoDao())
     }
 
@@ -81,6 +87,28 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
             DateFrame()
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    @Composable
+    fun mainFrame(){
+        Column(modifier = Modifier
+            .fillMaxSize(1.0f)
+            .background(color = MaterialTheme.colorScheme.surface)
+            .graphicsLayer {
+
+            }
+        )
+        {
+            UpperFrame()
+            HorizontalDivider(thickness = 2.dp, modifier = Modifier
+                .fillMaxWidth(0.5f)
+                .align(Alignment.CenterHorizontally)
+                .padding(bottom = 10.dp)
+            )
+            DownFrame()
+        }
+    }
+
 
     /**
      * 展示备忘录日期
@@ -285,9 +313,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
      */
     @Composable
     private fun addButton() {
-        ElevatedButton(onClick = {
-
-        }, modifier = Modifier.padding(start = 330.dp)) {
+        ElevatedButton(onClick = _navToAdd, modifier = Modifier.padding(start = 330.dp)) {
             Icon(Icons.Filled.Add, contentDescription = "Floating action button.")
         }
     }

@@ -16,22 +16,48 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.MiyamizuSu.mymemo.classLibrary.DataBase.AppDatabase
+import com.MiyamizuSu.mymemo.classLibrary.Enums.Screen
+import com.MiyamizuSu.mymemo.classLibrary.viewModels.AddFrameViewModel
 import com.MiyamizuSu.mymemo.classLibrary.viewModels.MainFrameViewModel
 import com.MiyamizuSu.mymemo.ui.theme.MyMemoTheme
 
 // 应用程序入口
 class MainActivity : ComponentActivity() {
-
+    @RequiresApi(Build.VERSION_CODES.O)
+    @Composable
+    private fun myMemo(){
+        val db = AppDatabase.getMyDb(this.applicationContext)
+        val navController = rememberNavController()
+        val mainViewModel=MainFrameViewModel(database =  db, navToAdd = {
+            navController.navigate("add")
+            println("toadd")
+        })
+        val addViewModel=AddFrameViewModel(navToMain = {navController.navigate("main")})
+        NavHost(
+            navController = navController,
+            startDestination = "main"
+        ) {
+            composable("main") {
+                mainViewModel.mainFrame()
+            }
+            composable("add") {
+                addViewModel.mainFrame()
+            }
+        }
+    }
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val db = AppDatabase.getMyDb(this.applicationContext)
-        var viewModel=MainFrameViewModel(db)
         enableEdgeToEdge()
         setContent {
             Scaffold(
@@ -55,28 +81,12 @@ class MainActivity : ComponentActivity() {
             ) { innerPadding ->
                 Column(modifier = Modifier.padding(innerPadding)) {
                     MyMemoTheme {
-                        Column(modifier = Modifier
-                            .fillMaxSize(1.0f)
-                            .background(color = MaterialTheme.colorScheme.surface)
-                            .graphicsLayer {
-
-                            }
-                        )
-                        {
-                            viewModel.UpperFrame()
-                            HorizontalDivider(thickness = 2.dp, modifier = Modifier
-                                .fillMaxWidth(0.5f)
-                                .align(Alignment.CenterHorizontally)
-                                .padding(bottom = 10.dp)
-                            )
-                            viewModel.DownFrame()
-                        }
+                        myMemo()
                     }
                 }
             }
         }
     }
-
     override fun onDestroy() {
         AppDatabase.getMyDb(this.applicationContext).close()
         super.onDestroy()
