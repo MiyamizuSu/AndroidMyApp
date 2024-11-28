@@ -8,12 +8,9 @@ class TypeHelper {
     fun fromMemoType(memoType: MemoType): Int {
         return memoType.value
     }
-
-
-
     @TypeConverter
     fun toMemoType(value: Int): MemoType {
-        return MemoType.values().firstOrNull { it.value == value } ?: MemoType.Error
+        return MemoType.values().firstOrNull { it.value == value } ?: MemoType.IMA
     }
 
 }
