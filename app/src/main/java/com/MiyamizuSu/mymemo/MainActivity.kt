@@ -6,27 +6,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.MiyamizuSu.mymemo.classLibrary.DataBase.AppDatabase
-import com.MiyamizuSu.mymemo.classLibrary.Enums.Screen
+import com.MiyamizuSu.mymemo.classLibrary.Enums.FrameType
 import com.MiyamizuSu.mymemo.classLibrary.viewModels.AddFrameViewModel
 import com.MiyamizuSu.mymemo.classLibrary.viewModels.MainFrameViewModel
 import com.MiyamizuSu.mymemo.ui.theme.MyMemoTheme
@@ -39,19 +31,21 @@ class MainActivity : ComponentActivity() {
         val db = AppDatabase.getMyDb(this.applicationContext)
         val navController = rememberNavController()
         val mainViewModel=MainFrameViewModel(database =  db, navToAdd = {
-            navController.navigate("add")
-            println("toadd")
+            navController.navigate(FrameType.Add.route)
         })
-        val addViewModel=AddFrameViewModel(navToMain = {navController.navigate("main")})
+        val addViewModel=AddFrameViewModel(
+            navToMain = {navController.navigate(FrameType.Main.route)},
+            database = db
+        )
         NavHost(
             navController = navController,
-            startDestination = "main"
+            startDestination = FrameType.Main.route
         ) {
-            composable("main") {
+            composable(FrameType.Main.route) {
                 mainViewModel.mainFrame()
             }
-            composable("add") {
-                addViewModel.mainFrame()
+            composable(FrameType.Add.route) {
+                addViewModel.MainFrame()
             }
         }
     }

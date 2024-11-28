@@ -20,7 +20,7 @@ class MemoRepo {
         return res
     }
 
-    public fun addNewMemo( newMemos: List<MemoItem>) {
+    suspend fun addNewMemo( newMemos: List<MemoItem>) {
         var maxUid= _memoDao.getMaxUid(newMemos[0].mIndex)
         for(item in newMemos){
             maxUid++
@@ -29,7 +29,7 @@ class MemoRepo {
         _memoDao.addAllMemo(*newMemos.toTypedArray())
     }
 
-    public fun addNewMemo( newMemo: MemoItem) {
+   suspend fun addNewMemo( newMemo: MemoItem) {
         var maxUid= _memoDao.getMaxUid(newMemo.mIndex)
         maxUid++
         newMemo.uuid=maxUid

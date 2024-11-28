@@ -26,3 +26,4 @@
 >   -  根据官方文档，room框架的数据库操作应当使用协程，避免因为io而导致主线程ui渲染被阻塞，启动协程的api为
 >   ```CoroutineScope(Dispatchers.io).launch {doSomething()}```
 >   -  在kotlin中异步方法为使用协程，LaunchedEffect(status)可以启动协程
+>   -  禁用了WAL模式,我实在是搞不懂这个WAL的写入模式了，关闭了连接还是明明写进去了，但是显示不出来，要等写入下一个才会显示上一个x.x

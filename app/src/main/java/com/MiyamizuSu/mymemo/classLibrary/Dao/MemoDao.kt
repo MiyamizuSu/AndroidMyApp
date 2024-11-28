@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MemoDao {
     @Insert
-     fun addNewMemo(newMemo:MemoItem)
+    suspend fun addNewMemo(newMemo:MemoItem)
 
     @Insert
-    fun addAllMemo(vararg memos:MemoItem)
+    suspend fun addAllMemo(vararg memos:MemoItem)
 
     @Query("Select * from mymemo ")
     suspend fun getAllMyMemo () : List<MemoItem>

@@ -1,9 +1,11 @@
 package com.MiyamizuSu.mymemo.classLibrary.viewModels
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,13 +13,15 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,7 +34,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,15 +54,16 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import com.MiyamizuSu.mymemo.classLibrary.DataBase.AppDatabase
 import com.MiyamizuSu.mymemo.classLibrary.Entity.MemoItem
 import com.MiyamizuSu.mymemo.classLibrary.Enums.MemoType
+import com.MiyamizuSu.mymemo.classLibrary.Helpers.DateHelper.calculateDaysFromToday
 import com.MiyamizuSu.mymemo.classLibrary.Repository.MemoRepo
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -74,7 +82,6 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
      * 上半部分组件容器
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    @OptIn(ExperimentalLayoutApi::class)
     @Composable
     fun UpperFrame() {
         Box(
@@ -83,7 +90,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                 .fillMaxWidth(1.0f)
                 .fillMaxHeight(0.5f),
         ) {
-            addButton()
+            AddButton()
             DateFrame()
         }
     }
@@ -136,7 +143,6 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                         color = MaterialTheme.colorScheme.surface,
                         shape = MaterialTheme.shapes.large
                     ),
-
                 )
             {
                 Text(
@@ -164,6 +170,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
     /**
      * 下半部分组件容器
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     @Composable
     fun DownFrame() {
         var myMemos by remember { mutableStateOf<List<MemoItem>>(emptyList()) }
@@ -203,7 +210,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
             state = listState,
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight()
+                .fillMaxHeight(0.95f)
                 .background(
                     color = Color.Transparent,
                     shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
@@ -232,10 +239,12 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                             scaleY = animatedScale
                         }
 
-                    cardItem(
+                    CardItem(
                         title = item.title,
                         description = item.description.orEmpty(),
-                        modifier = itemModifier
+                        modifier = itemModifier,
+                        unionDate = item.unionDate,
+                        memoType = item.mIndex
                     )
 
             }
@@ -246,40 +255,10 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
     /**
      * 透明卡片
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     @Composable
-    private fun cardItem(title: String, description: String) {
-        ElevatedCard(
-            colors = CardDefaults.cardColors(
-                containerColor = Color.Transparent.copy(alpha = 0.05f)// 设置透明背景
-            ),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 0.dp // 取消阴影效果，若仍需轻微阴影可以调整此值
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(70.dp)
-                .padding(start = 5.dp, end = 5.dp, top = 10.dp)
-        )
-        {
-            Column(modifier = Modifier.padding(start = 20.dp)) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 3.dp),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-                Text(
-                    text = description,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 3.dp),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun cardItem(title: String, description: String, modifier: Modifier) {
+    private fun CardItem(title: String, description: String, modifier: Modifier,unionDate:String,memoType:MemoType) {
+        val dayBet=calculateDaysFromToday(unionDate)
         ElevatedCard(
             colors = CardDefaults.cardColors(
                 containerColor = Color.Transparent.copy(alpha = 0.05f)
@@ -290,18 +269,74 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
 
         )
         {
-            Column(modifier = Modifier.padding(start = 20.dp)) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 3.dp),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+            Column(
+                modifier = Modifier.padding(start = 20.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 3.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // 左侧的 Text
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        overflow = TextOverflow.Clip ,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        modifier = Modifier
+                            .padding(end = 6.dp)
+                            .wrapContentWidth(Alignment.End)
+                    )
+                    {
+                        SuggestionChip(
+                            onClick = { },
+                            label = {
+                                when (memoType) {
+                                    MemoType.FUTURE -> {
+                                        Text(text = "距今${dayBet}天", color = Color.White)
+                                    }
+                                    MemoType.IMA -> {
+                                        Text(text = "现在！", color = Color.White,modifier=Modifier.fillMaxWidth(1.0f), textAlign = TextAlign.Center)
+                                    }
+                                    else -> {
+                                        Text(text = "过去${dayBet}天", color = Color.White)
+                                    }
+                                }
+                            },
+                            modifier = Modifier.size(width = 90.dp, height = 20.dp),
+                            border = BorderStroke(0.dp, Color.Transparent),
+                            colors = when (memoType) {
+                                MemoType.FUTURE -> SuggestionChipDefaults.suggestionChipColors(
+                                    containerColor = Color(0x808FCEE3),
+                                )
+                                MemoType.IMA -> SuggestionChipDefaults.suggestionChipColors(
+                                    containerColor = Color(0x806EC02D),
+                                )
+                                else -> SuggestionChipDefaults.suggestionChipColors(
+                                    containerColor = Color(0x80FFA500),
+                                )
+                            }
+                        )
+                        Text(
+                            text = unionDate,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+
                 Text(
                     text = description,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 3.dp),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    modifier = Modifier.padding(start = 9.dp),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    overflow = TextOverflow.Clip
                 )
             }
         }
@@ -312,7 +347,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
      * 增加按钮
      */
     @Composable
-    private fun addButton() {
+    private fun AddButton() {
         ElevatedButton(onClick = _navToAdd, modifier = Modifier.padding(start = 330.dp)) {
             Icon(Icons.Filled.Add, contentDescription = "Floating action button.")
         }
