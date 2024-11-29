@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,12 +15,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -27,6 +31,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
@@ -48,22 +56,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.ViewModel
 import com.MiyamizuSu.mymemo.classLibrary.DataBase.AppDatabase
 import com.MiyamizuSu.mymemo.classLibrary.Entity.MemoItem
 import com.MiyamizuSu.mymemo.classLibrary.Enums.MemoType
 import com.MiyamizuSu.mymemo.classLibrary.Helpers.DateHelper.calculateDaysFromToday
 import com.MiyamizuSu.mymemo.classLibrary.Repository.MemoRepo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -98,6 +114,83 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
     fun mainFrame(){
+        var openDialog by remember { mutableStateOf(false) }
+        var memo by remember { mutableStateOf(MemoItem()) }
+        when {
+            // ...
+            openDialog -> {
+                Dialog(onDismissRequest = { openDialog=false }, properties = DialogProperties(dismissOnClickOutside = true)) {
+                    Card(
+                        modifier = Modifier
+                            .width(700.dp)
+                            .height(400.dp)
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                    )
+                    {
+                        BoxWithConstraints(Modifier.fillMaxWidth().fillMaxHeight()) {
+                            val cardWidth=maxWidth
+                            val cardHeight=maxHeight
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(top = cardHeight * 0.1f)
+                                        .fillMaxHeight() // 确保 Column 占满可用高度
+                                ) {
+                                    Text(
+                                        fontSize = 34.sp,
+                                        text = memo.title,
+                                        modifier = Modifier
+                                            .align(Alignment.CenterHorizontally)
+                                    )
+                                    Text(
+                                        text = memo.unionDate,
+                                        modifier = Modifier
+                                            .padding(start = 0.65f * cardWidth, top = 0.1 * cardHeight)
+                                    )
+                                    Text(
+                                        text = memo.description,
+                                        modifier = Modifier.padding(start = 0.05 * cardWidth)
+                                    )
+                                    // Spacer 将内容推到顶部，确保分隔线在底部
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                                // HorizontalDivider 始终在底部居中
+                                HorizontalDivider(
+                                    thickness = 2.dp,
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.5f)
+                                        .align(Alignment.BottomCenter) // 始终在底部中央
+                                        .padding(bottom = 10.dp, top = 0.05f * cardHeight)
+                                )
+                                // 删除按钮，放在右上角
+                                ElevatedButton(
+                                    onClick = {
+                                        CoroutineScope(Dispatchers.IO).launch {
+                                            _memoRepo.deleteMemo(memo)
+                                            memo= MemoItem()
+                                        }
+                                        openDialog=false
+                                    },
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(16.dp),
+                                )
+                                {
+                                    Icon(Icons.Filled.Delete, contentDescription = "deleteItem.")
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+        val updateMessage: (MemoItem) -> Unit = { myMemo->
+            memo=myMemo
+            openDialog=true
+        }
+
         Column(modifier = Modifier
             .fillMaxSize(1.0f)
             .background(color = MaterialTheme.colorScheme.surface)
@@ -112,7 +205,9 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 10.dp)
             )
-            DownFrame()
+            DownFrame(
+                handleCardDoubleTap = updateMessage
+            )
         }
     }
 
@@ -172,10 +267,18 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
-    fun DownFrame() {
+    fun DownFrame(handleCardDoubleTap:(MemoItem)->Unit) {
         var myMemos by remember { mutableStateOf<List<MemoItem>>(emptyList()) }
         LaunchedEffect(Unit) {
             myMemos = _memoRepo.getAllMemo()
+            for (myMemo in myMemos){
+                if(myMemo.mIndex==MemoType.EVER){
+
+                }
+                else{
+                    _memoRepo.updateMemo(myMemo)
+                }
+            }
         }
         val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
@@ -240,11 +343,14 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                         }
 
                     CardItem(
-                        title = item.title,
-                        description = item.description.orEmpty(),
                         modifier = itemModifier,
                         unionDate = item.unionDate,
-                        memoType = item.mIndex
+                        handleDoubleTap = { memo ->
+                            handleCardDoubleTap(memo)
+                            // 在删除后更新列表
+                            myMemos = myMemos.filterNot { it.uuid == memo.uuid }
+                        },
+                        memo = item
                     )
 
             }
@@ -257,7 +363,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
-    private fun CardItem(title: String, description: String, modifier: Modifier,unionDate:String,memoType:MemoType) {
+    private fun CardItem(memo:MemoItem, modifier: Modifier,unionDate:String,handleDoubleTap:(MemoItem)->Unit) {
         val dayBet=calculateDaysFromToday(unionDate)
         ElevatedCard(
             colors = CardDefaults.cardColors(
@@ -265,7 +371,12 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
             ),
             elevation = CardDefaults.cardElevation(
             ),
-            modifier = modifier
+            modifier = modifier.pointerInput(Unit){
+                detectTapGestures(onDoubleTap = {
+                    offset: Offset ->
+                    handleDoubleTap(memo)
+                } )
+            }
 
         )
         {
@@ -280,7 +391,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                 ) {
                     // 左侧的 Text
                     Text(
-                        text = title,
+                        text = memo.title,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         overflow = TextOverflow.Clip ,
@@ -296,7 +407,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                         SuggestionChip(
                             onClick = { },
                             label = {
-                                when (memoType) {
+                                when (memo.mIndex) {
                                     MemoType.FUTURE -> {
                                         Text(text = "距今${dayBet}天", color = Color.White)
                                     }
@@ -310,7 +421,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                             },
                             modifier = Modifier.size(width = 90.dp, height = 20.dp),
                             border = BorderStroke(0.dp, Color.Transparent),
-                            colors = when (memoType) {
+                            colors = when (memo.mIndex) {
                                 MemoType.FUTURE -> SuggestionChipDefaults.suggestionChipColors(
                                     containerColor = Color(0x808FCEE3),
                                 )
@@ -332,7 +443,7 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                 }
 
                 Text(
-                    text = description,
+                    text = memo.description,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 9.dp),
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -352,4 +463,8 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
             Icon(Icons.Filled.Add, contentDescription = "Floating action button.")
         }
     }
+    data class DoubleTapData(
+        val offset: Offset,
+        val memoDetail:MemoItem
+    )
 }
