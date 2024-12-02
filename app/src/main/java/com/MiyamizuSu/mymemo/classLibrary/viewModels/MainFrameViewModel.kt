@@ -114,6 +114,18 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
     fun mainFrame(){
+        var myMemos by remember { mutableStateOf<List<MemoItem>>(emptyList()) }
+        LaunchedEffect(Unit) {
+            myMemos = _memoRepo.getAllMemo()
+            for (myMemo in myMemos){
+                if(myMemo.mIndex==MemoType.EVER){
+
+                }
+                else{
+                    _memoRepo.updateMemo(myMemo)
+                }
+            }
+        }
         var openDialog by remember { mutableStateOf(false) }
         var memo by remember { mutableStateOf(MemoItem()) }
         when {
@@ -152,29 +164,26 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                                         text = memo.description,
                                         modifier = Modifier.padding(start = 0.05 * cardWidth)
                                     )
-                                    // Spacer 将内容推到顶部，确保分隔线在底部
                                     Spacer(modifier = Modifier.weight(1f))
                                 }
-                                // HorizontalDivider 始终在底部居中
                                 HorizontalDivider(
                                     thickness = 2.dp,
                                     modifier = Modifier
                                         .fillMaxWidth(0.5f)
-                                        .align(Alignment.BottomCenter) // 始终在底部中央
+                                        .align(Alignment.BottomCenter)
                                         .padding(bottom = 10.dp, top = 0.05f * cardHeight)
                                 )
-                                // 删除按钮，放在右上角
                                 ElevatedButton(
                                     onClick = {
                                         CoroutineScope(Dispatchers.IO).launch {
                                             _memoRepo.deleteMemo(memo)
-                                            memo= MemoItem()
+                                            myMemos = myMemos.filterNot { it.uuid == memo.uuid }
                                         }
                                         openDialog=false
                                     },
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .padding(16.dp),
+                                        .padding(3.dp),
                                 )
                                 {
                                     Icon(Icons.Filled.Delete, contentDescription = "deleteItem.")
@@ -206,7 +215,8 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                 .padding(bottom = 10.dp)
             )
             DownFrame(
-                handleCardDoubleTap = updateMessage
+                handleCardDoubleTap = updateMessage,
+                myMemos = myMemos
             )
         }
     }
@@ -267,19 +277,9 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
-    fun DownFrame(handleCardDoubleTap:(MemoItem)->Unit) {
-        var myMemos by remember { mutableStateOf<List<MemoItem>>(emptyList()) }
-        LaunchedEffect(Unit) {
-            myMemos = _memoRepo.getAllMemo()
-            for (myMemo in myMemos){
-                if(myMemo.mIndex==MemoType.EVER){
+    fun DownFrame(handleCardDoubleTap:(MemoItem)->Unit,myMemos:List<MemoItem>) {
 
-                }
-                else{
-                    _memoRepo.updateMemo(myMemo)
-                }
-            }
-        }
+
         val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
         val cardHeight = 70.dp
@@ -347,8 +347,6 @@ class MainFrameViewModel : ViewModelBase, ViewModel {
                         unionDate = item.unionDate,
                         handleDoubleTap = { memo ->
                             handleCardDoubleTap(memo)
-                            // 在删除后更新列表
-                            myMemos = myMemos.filterNot { it.uuid == memo.uuid }
                         },
                         memo = item
                     )
