@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -185,7 +186,7 @@ class AddFrameViewModel : ViewModelBase, ViewModel {
                     ) {
                         val cardWidth = maxWidth
                         val cardHeight = maxHeight
-                        Column {
+                        Column(modifier = Modifier.padding(top = cardHeight*0.1f)) {
                             MyTextField(
                                 newValue = newMemoTitle,
                                 cardWidth = cardWidth,
@@ -210,15 +211,6 @@ class AddFrameViewModel : ViewModelBase, ViewModel {
                                 onNewValueChange = { newMemoDescription = it },
                                 isFullLine = true,
                                 textFieldTitle = "请输入简介"
-                            )
-                            MyTextField(
-                                newValue = newMemoImg,
-                                cardWidth = cardWidth,
-                                cardHeight = cardHeight,
-                                focusRequester = focusRequester,
-                                onNewValueChange = { newMemoImg = it },
-                                isFullLine = true,
-                                textFieldTitle = "请输入图片"
                             )
                             HorizontalDivider(
                                 thickness = 2.dp, modifier = Modifier
@@ -281,7 +273,7 @@ class AddFrameViewModel : ViewModelBase, ViewModel {
                         blurRadius = 2f
                     )
                 ),
-                minLines = 3,
+                minLines = 6,
                 modifier = Modifier
                     .focusRequester(focusRequester)
                     .padding(start = 0.05 * cardWidth)

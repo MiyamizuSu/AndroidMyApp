@@ -1,10 +1,12 @@
 package com.MiyamizuSu.mymemo
 
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
@@ -12,6 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
@@ -25,6 +30,17 @@ import com.MiyamizuSu.mymemo.ui.theme.MyMemoTheme
 
 // 应用程序入口
 class MainActivity : ComponentActivity() {
+
+    private var selectedImageUri by mutableStateOf<Uri?>(null)
+    private val pickImageLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                // 处理返回的图片Uri
+                selectedImageUri = uri
+            }
+        }
+
+
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
     private fun myMemo(){

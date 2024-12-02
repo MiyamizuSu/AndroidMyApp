@@ -18,7 +18,7 @@ abstract class AppDatabase : RoomDatabase() {
      */
     companion object {
         private var db: AppDatabase? = null
-        private val dbName = "mydb.db"
+        private val dbName = "mydb3.db"
         fun getMyDb(context: Context): AppDatabase = if (db == null) {
             Room.databaseBuilder(context, AppDatabase::class.java, dbName)
                 .setJournalMode(JournalMode.TRUNCATE)
